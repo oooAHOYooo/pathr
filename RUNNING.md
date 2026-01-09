@@ -1,4 +1,26 @@
-# 🚀 Pathr - Currently Running
+# 🚀 Pathr - Running Locally
+
+## One command (recommended)
+
+From the repo root:
+
+```bash
+pnpm local
+```
+
+This will:
+- install dependencies (unless you pass `--skip-install`)
+- start local Supabase if the `supabase` CLI is available (skip with `--no-supabase`)
+- start **both** web + mobile dev servers
+
+Common options:
+
+```bash
+pnpm local --no-supabase
+pnpm local --web-only
+pnpm local --mobile-only
+pnpm local --skip-install
+```
 
 ## Status
 
