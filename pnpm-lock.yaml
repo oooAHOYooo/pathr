@@ -32,6 +32,12 @@ importers:
       expo:
         specifier: ~50.0.0
         version: 50.0.21(@babel/core@7.28.5)(@react-native/babel-preset@0.83.1)(react-native@0.73.0)(react@18.2.0)
+      expo-blur:
+        specifier: ~12.8.0
+        version: 12.8.0(expo@50.0.21)
+      expo-linear-gradient:
+        specifier: ~12.7.0
+        version: 12.7.2(expo@50.0.21)
       expo-location:
         specifier: ~16.5.0
         version: 16.5.5(expo@50.0.21)
@@ -1751,7 +1757,7 @@ packages:
 
   /@expo/bunyan@4.0.1:
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
     dependencies:
       uuid: 8.3.2
     dev: false
@@ -5749,6 +5755,14 @@ packages:
       - supports-color
     dev: false
 
+  /expo-blur@12.8.0(expo@50.0.21):
+    resolution: {integrity: sha512-ngM4x21Sg1kLnu1DtZA60+oQsKRXsXrzzZWU24THGnMNA36P0O1rTKbERxdExRvJavO5ls3Gu54ut+IvKFQhew==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      expo: 50.0.21(@babel/core@7.28.5)(@react-native/babel-preset@0.83.1)(react-native@0.73.0)(react@18.2.0)
+    dev: false
+
   /expo-constants@15.4.6(expo@50.0.21):
     resolution: {integrity: sha512-vizE69dww2Vl0PTWWvDmK0Jo2/J+WzdcMZlA05YEnEYofQuhKxTVsiuipf79mSOmFavt4UQYC1UnzptzKyfmiQ==}
     peerDependencies:
@@ -5793,6 +5807,14 @@ packages:
 
   /expo-keep-awake@12.8.2(expo@50.0.21):
     resolution: {integrity: sha512-uiQdGbSX24Pt8nGbnmBtrKq6xL/Tm3+DuDRGBk/3ZE/HlizzNosGRIufIMJ/4B4FRw4dw8KU81h2RLuTjbay6g==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      expo: 50.0.21(@babel/core@7.28.5)(@react-native/babel-preset@0.83.1)(react-native@0.73.0)(react@18.2.0)
+    dev: false
+
+  /expo-linear-gradient@12.7.2(expo@50.0.21):
+    resolution: {integrity: sha512-Wwb2EF18ywgrlTodcXJ6Yt/UEcKitRMdXPNyP/IokmeKh4emoq9DxZJpZdkXm3HUTLlbRpi6/t32jrFVqXB9AQ==}
     peerDependencies:
       expo: '*'
     dependencies:

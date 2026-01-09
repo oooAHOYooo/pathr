@@ -4,6 +4,8 @@
   "private": true,
   "description": "Like Strava for driving — Record trips, discover scenic routes, build your personal map",
   "scripts": {
+    "startup": "node scripts/startup.mjs",
+    "startup:win": "startup.bat",
     "local": "node scripts/local-dev.mjs",
     "dev": "pnpm --filter mobile dev",
     "dev:web": "pnpm --filter web dev",

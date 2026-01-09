@@ -539,6 +539,36 @@ pathr/
 
 ### Quick Start
 
+**🚀 Recommended: Use the startup script (handles everything automatically)**
+
+```bash
+# Clone the repo
+git clone https://github.com/yourusername/pathr.git
+cd pathr
+
+# Option 1: If pnpm is in PATH (after first run)
+pnpm startup
+
+# Option 2: Windows - Use wrapper script (works even if pnpm not in PATH)
+.\startup.bat
+# or
+.\startup.ps1
+
+# Option 3: Run directly with Node.js (works if pnpm not in PATH)
+node scripts/startup.mjs
+```
+
+The startup script will:
+- ✅ Check and setup Node.js/pnpm environment
+- ✅ Install dependencies if needed
+- ✅ Check for updates
+- ✅ Start development servers
+- ✅ Open browser automatically
+
+**Note for Windows users**: If you see "pnpm is not recognized", use `.\startup.bat` or `node scripts/startup.mjs` instead. See [QUICK_START_WINDOWS.md](./QUICK_START_WINDOWS.md) for details.
+
+**Manual setup (if you prefer):**
+
 ```bash
 # Clone and install
 git clone https://github.com/yourusername/pathr.git
@@ -560,6 +590,8 @@ pnpm expo start
 cd apps/web
 pnpm dev
 ```
+
+See [STARTUP.md](./STARTUP.md) for more details on the startup script.
 
 ### Environment Variables
 

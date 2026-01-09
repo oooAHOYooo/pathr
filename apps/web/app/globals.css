@@ -2,3 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-base-light dark:bg-base-dark text-text-light dark:text-text-dark;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  /* Liquid Glass Frosted Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .glass-medium {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .glass-heavy {
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(60px);
+    -webkit-backdrop-filter: blur(60px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .glass-dark {
+    background: rgba(28, 28, 30, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .glass-dark-medium {
+    background: rgba(28, 28, 30, 0.25);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Gradient Accent */
+  .gradient-accent {
+    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  }
+  
+  /* Glow Effect */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
+  }
+  
+  .glow-accent {
+    box-shadow: 0 0 30px rgba(102, 126, 234, 0.4);
+  }
+  
+  /* Liquid Glass Shadow */
+  .shadow-glass {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .shadow-glass-medium {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+  
+  .shadow-glass-large {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  }
+}
+

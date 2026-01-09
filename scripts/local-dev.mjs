@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import os from 'node:os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +40,55 @@ function spawnPromise(command, commandArgs, { cwd = repoRoot } = {}) {
       return reject(new Error(`${command} exited with code ${code}`));
     });
   });
+}
+
+function spawnBackground(command, commandArgs, { cwd = repoRoot } = {}) {
+  const shell = process.platform === 'win32';
+
+  const child = spawn(command, commandArgs, {
+    cwd,
+    stdio: 'inherit',
+    shell,
+    env: process.env,
+  });
+
+  child.on('error', (err) => {
+    console.error(`Error starting ${command}:`, err);
+  });
+
+  return child;
+}
+
+function openBrowser(url) {
+  const platform = os.platform();
+  let command;
+  let args;
+  let useShell = false;
+
+  if (platform === 'win32') {
+    // Windows: use 'start' command to open in default browser
+    // The empty string is required as the title parameter
+    command = 'cmd';
+    args = ['/c', 'start', '""', url];
+    useShell = true;
+  } else if (platform === 'darwin') {
+    // macOS: use 'open' command
+    command = 'open';
+    args = [url];
+  } else {
+    // Linux: use 'xdg-open'
+    command = 'xdg-open';
+    args = [url];
+  }
+
+  spawn(command, args, {
+    stdio: 'ignore',
+    shell: useShell,
+  });
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function commandExists(command) {
@@ -139,13 +189,39 @@ try {
 
   if (webOnly) {
     log('Starting web app (pnpm dev:web)…');
-    await spawnPromise('pnpm', ['dev:web']);
+    const webProcess = spawnBackground('pnpm', ['dev:web']);
+    log('Waiting for web server to start…');
+    await sleep(3000); // Wait 3 seconds for server to start
+    log('Opening browser at http://localhost:3000…');
+    openBrowser('http://localhost:3000');
+    // Keep the process running
+    await new Promise((resolve, reject) => {
+      webProcess.on('exit', (code, signal) => {
+        if (signal) return reject(new Error(`Web app exited with signal ${signal}`));
+        if (code !== 0) return reject(new Error(`Web app exited with code ${code}`));
+        resolve();
+      });
+      webProcess.on('error', reject);
+    });
   } else if (mobileOnly) {
     log('Starting mobile app (pnpm dev)…');
     await spawnPromise('pnpm', ['dev']);
   } else {
     log('Starting web + mobile (pnpm dev:all)…');
-    await spawnPromise('pnpm', ['dev:all']);
+    const allProcess = spawnBackground('pnpm', ['dev:all']);
+    log('Waiting for servers to start…');
+    await sleep(3000); // Wait 3 seconds for servers to start
+    log('Opening browser at http://localhost:3000…');
+    openBrowser('http://localhost:3000');
+    // Keep the process running
+    await new Promise((resolve, reject) => {
+      allProcess.on('exit', (code, signal) => {
+        if (signal) return reject(new Error(`Dev servers exited with signal ${signal}`));
+        if (code !== 0) return reject(new Error(`Dev servers exited with code ${code}`));
+        resolve();
+      });
+      allProcess.on('error', reject);
+    });
   }
 } catch (err) {
   console.error(err?.message ?? err);
