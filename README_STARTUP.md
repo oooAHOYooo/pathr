@@ -1,5 +1,25 @@
 # 🚀 Using `pnpm startup` - Complete Guide
 
+## ⚡ Simplest Method (No Execution Policy Issues!)
+
+**Just run this:**
+```powershell
+.\start.bat
+```
+
+That's it! This batch file:
+- ✅ Works immediately (no PowerShell execution policy needed)
+- ✅ Finds pnpm automatically
+- ✅ Starts the web app at http://localhost:3000
+
+**Options:**
+```powershell
+.\start.bat web      # Web app only
+.\start.bat mobile   # Mobile app only
+```
+
+---
+
 ## The Solution
 
 I've created local wrapper scripts (`pnpm.cmd` and `pnpm.ps1`) that make `pnpm startup` work even when pnpm isn't in your system PATH!
@@ -126,4 +146,5 @@ After this, `pnpm startup` will work from anywhere!
 ✅ Works even if pnpm isn't installed globally  
 
 Enjoy! 🚗✨
+
 

@@ -50,3 +50,4 @@ export function calculateSpeed(
   return speedMs * 3.6; // Convert m/s to km/h
 }
 
+

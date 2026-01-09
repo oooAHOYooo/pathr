@@ -123,3 +123,4 @@ CREATE POLICY "Users can insert own trip points" ON trip_points
 CREATE POLICY "Users can manage own sync queue" ON sync_queue
   FOR ALL USING (auth.uid() = user_id);
 
+

@@ -44,3 +44,4 @@ We need to choose a tech stack optimized for fast MVP delivery (2-4 weeks) while
 - Negative: Vendor lock-in with Supabase (can migrate later if needed)
 - Mitigation: Use Supabase for MVP, consider self-hosting at scale
 
+
