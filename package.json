@@ -1,0 +1,28 @@
+{
+  "name": "pathr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Like Strava for driving — Record trips, discover scenic routes, build your personal map",
+  "scripts": {
+    "dev": "pnpm --filter mobile dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:all": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm --recursive --filter \"./apps/*\" build",
+    "lint": "pnpm --recursive --filter \"./apps/*\" lint",
+    "typecheck": "pnpm --recursive --filter \"./apps/*\" typecheck",
+    "test": "pnpm --recursive --filter \"./packages/*\" test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
+
