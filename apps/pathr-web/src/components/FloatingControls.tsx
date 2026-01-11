@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "./Button";
+import { useRecording } from "../recording/RecordingProvider";
 
 function IconTrips() {
   return (
@@ -37,10 +38,15 @@ type Props = {
 
 export function FloatingControls({ className }: Props) {
   const [hint, setHint] = useState<string | null>(null);
+  const { state, start, pause, resume, stop, statusText } = useRecording();
 
   return (
     <div className={["fixed inset-x-0 bottom-0 z-20", className].filter(Boolean).join(" ")}>
       <div className="mx-auto max-w-6xl px-4 pb-5">
+        {statusText ? (
+          <div className="mb-2 text-center text-xs text-ink/60">{statusText}</div>
+        ) : null}
+
         {hint ? (
           <div className="mb-2 text-center text-xs text-ink/60">
             {hint}{" "}
@@ -74,14 +80,41 @@ export function FloatingControls({ className }: Props) {
               <IconProfile />
             </button>
 
-            <Button
-              variant="primary"
-              className="h-12 rounded-full px-5"
-              onClick={() => setHint("Trip recording isn’t wired up yet.")}
-              type="button"
-            >
-              Start Trip
-            </Button>
+            {state.isRecording ? (
+              <>
+                <Button
+                  className="h-12 rounded-full px-5"
+                  onClick={() => (state.isPaused ? resume() : pause())}
+                  type="button"
+                >
+                  {state.isPaused ? "Resume" : "Pause"}
+                </Button>
+
+                <Button
+                  variant="primary"
+                  className="h-12 rounded-full px-5"
+                  onClick={() => {
+                    stop();
+                    setHint("Saved locally. Trips will sync to your account later.");
+                  }}
+                  type="button"
+                >
+                  Stop
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                className="h-12 rounded-full px-5"
+                onClick={() => {
+                  start();
+                  setHint("Recording mode on. Click the map to add points.");
+                }}
+                type="button"
+              >
+                Start Trip
+              </Button>
+            )}
           </div>
         </div>
       </div>

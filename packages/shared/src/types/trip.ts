@@ -44,4 +44,13 @@ export interface TripStats {
   };
 }
 
+/**
+ * Minimal persisted payload for local-first MVPs (e.g. web localStorage).
+ * Keeps "business objects" (Trip + points) in shared to avoid divergence.
+ */
+export interface StoredTrip {
+  trip: Trip;
+  points: TripPoint[];
+}
+
 

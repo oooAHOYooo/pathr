@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "../components/Button";
-import { MapPlaceholder } from "../components/MapPlaceholder";
-import { getTripById } from "../data/mockTrips";
+import type { FeatureCollection, LineString } from "geojson";
+import { MapView } from "../map/MapView";
+import { tripsToFeatureCollection } from "../map/geojson";
+import { getStoredTripById, loadStoredTrips } from "../storage/trips";
 import {
   avgSpeedMph,
   formatDistanceMiles,
@@ -12,7 +14,11 @@ import {
 
 export function TripDetailPage() {
   const params = useParams();
-  const trip = params.id ? getTripById(params.id) : undefined;
+  const stored = params.id ? getStoredTripById(params.id) : undefined;
+  const trip = stored?.trip;
+
+  const visited = useMemo(() => tripsToFeatureCollection(loadStoredTrips()), []);
+  const empty: FeatureCollection<LineString> = useMemo(() => ({ type: "FeatureCollection", features: [] }), []);
 
   const avg = useMemo(() => {
     if (!trip) return 0;
@@ -34,20 +40,25 @@ export function TripDetailPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pt-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-sm font-medium">{trip.name}</div>
           <div className="mt-1 text-xs text-ink/60">Trip detail</div>
         </div>
 
-        <Button disabled type="button">
-          Share
+        <Button disabled title="Account saving comes next." type="button">
+          Save to Account
         </Button>
       </div>
 
       <div className="h-[52dvh]">
-        <MapPlaceholder label="Trip map" />
+        <MapView
+          accessToken={import.meta.env.VITE_MAPBOX_TOKEN as string | undefined}
+          visited={visited}
+          active={empty}
+          highlightTripId={trip.id}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

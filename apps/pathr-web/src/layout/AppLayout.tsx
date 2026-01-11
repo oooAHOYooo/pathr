@@ -12,7 +12,7 @@ export function AppLayout({ showControls = true, children }: Props) {
     <div className="min-h-[100dvh] bg-paper text-ink">
       <TopNav />
 
-      <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 pb-28 pt-16">
+      <main className="min-h-[100dvh] pb-28 pt-14">
         {children ?? <Outlet />}
       </main>
 

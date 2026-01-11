@@ -1,6 +1,5 @@
 import { Route, Routes } from "react-router-dom";
 import { AppLayout } from "../layout/AppLayout";
-import { LandingPage } from "../pages/LandingPage";
 import { AppHomePage } from "../pages/AppHomePage";
 import { TripsPage } from "../pages/TripsPage";
 import { TripDetailPage } from "../pages/TripDetailPage";

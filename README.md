@@ -593,6 +593,16 @@ pnpm dev
 
 See [STARTUP.md](./STARTUP.md) for more details on the startup script.
 
+### Deploy on Render (Vite Web MVP)
+
+The Vite web MVP lives in `apps/pathr-web` and depends on workspace packages (notably `@pathr/shared`), so Render should build from the **repo root** using **pnpm**.
+
+- **Build command**: `pnpm install --frozen-lockfile && pnpm --filter @pathr/pathr-web build`
+- **Publish directory**: `apps/pathr-web/dist`
+- **Env var**: `VITE_MAPBOX_TOKEN` (Mapbox access token for Mapbox GL JS)
+
+Optional: this repo includes a `render.yaml` you can use to create the service.
+
 ### Environment Variables
 
 `.env.example`:
