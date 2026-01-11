@@ -4,7 +4,4 @@ services:
     env: static
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @pathr/pathr-web build
     staticPublishPath: apps/pathr-web/dist
-    envVars:
-      - key: VITE_MAPBOX_TOKEN
-        sync: false
 

@@ -599,7 +599,6 @@ The Vite web MVP lives in `apps/pathr-web` and depends on workspace packages (no
 
 - **Build command**: `pnpm install --frozen-lockfile && pnpm --filter @pathr/pathr-web build`
 - **Publish directory**: `apps/pathr-web/dist`
-- **Env var**: `VITE_MAPBOX_TOKEN` (Mapbox access token for Mapbox GL JS)
 
 Optional: this repo includes a `render.yaml` you can use to create the service.
 

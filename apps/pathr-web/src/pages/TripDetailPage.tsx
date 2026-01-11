@@ -52,9 +52,9 @@ export function TripDetailPage() {
         </Button>
       </div>
 
-      <div className="h-[52dvh]">
+      <div className="h-[52dvh] overflow-hidden rounded-xl border bg-surface">
         <MapView
-          accessToken={import.meta.env.VITE_MAPBOX_TOKEN as string | undefined}
+          className="h-full w-full"
           visited={visited}
           active={empty}
           highlightTripId={trip.id}

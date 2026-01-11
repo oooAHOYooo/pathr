@@ -28,17 +28,20 @@ export function AppHomePage() {
   }, [state.points]);
 
   return (
-    <div className="relative h-[calc(100dvh-56px)]">
-      <MapView
-        accessToken={import.meta.env.VITE_MAPBOX_TOKEN as string | undefined}
-        visited={visited}
-        active={active}
-        onMapClick={addPoint}
-      />
-      <div className="pointer-events-none absolute left-0 right-0 top-0">
-        <div className="mx-auto max-w-6xl px-4 pt-3">
-          <div className="inline-flex items-center rounded-xl border bg-paper/90 px-3 py-2 text-xs text-ink/70">
-            Tap <span className="mx-1 font-medium text-ink">Start Trip</span> then click the map to add points.
+    <div className="mx-auto max-w-6xl px-4 pt-4">
+      <div className="relative h-[calc(100dvh-56px-24px)] overflow-hidden rounded-xl border bg-surface">
+        <MapView
+          className="h-full w-full"
+          visited={visited}
+          active={active}
+          onMapClick={addPoint}
+        />
+
+        <div className="pointer-events-none absolute left-0 right-0 top-0">
+          <div className="p-3">
+            <div className="inline-flex items-center rounded-xl border bg-paper/90 px-3 py-2 text-xs text-ink/70">
+              Tap <span className="mx-1 font-medium text-ink">Start Trip</span> then click the map to add points.
+            </div>
           </div>
         </div>
       </div>
