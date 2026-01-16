@@ -5,11 +5,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#111",
-        paper: "#FAFAFA",
-        surface: "#F2F2F2",
-        border: "#E5E5E5",
-        accent: "#2563EB"
+        // Sports palette (dark + bright yellow)
+        ink: "#F5F6F7",
+        paper: "#192230",
+        surface: "#2C2F38",
+        border: "#3D474E",
+        accent: "#FFCD00"
       },
       borderRadius: {
         xl: "12px"

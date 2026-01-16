@@ -27,24 +27,28 @@ export function TripDetailPage() {
 
   if (!trip) {
     return (
-      <div className="rounded-xl border bg-white p-5 shadow-soft">
-        <div className="text-sm font-medium">Trip not found</div>
-        <div className="mt-2 text-sm text-ink/70">That trip doesn’t exist in the mock data.</div>
-        <div className="mt-4">
-          <Link to="/app/trips" className="text-sm underline underline-offset-4 hover:text-ink/80">
-            Back to trips
-          </Link>
+      <div className="space-y-4">
+        <div className="overflow-hidden rounded-[34px] bg-white/10 ring-1 ring-white/15 backdrop-blur">
+          <div className="p-5">
+            <div className="text-sm font-semibold text-white/90">Trip not found</div>
+            <div className="mt-2 text-sm text-white/70">That trip doesn’t exist on this device.</div>
+            <div className="mt-4">
+              <Link to="/app/trips" className="text-sm font-semibold text-white/85 underline underline-offset-4 hover:text-white">
+                Back to trips
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pt-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-sm font-medium">{trip.name}</div>
-          <div className="mt-1 text-xs text-ink/60">Trip detail</div>
+          <div className="truncate text-sm font-semibold text-white/90">{trip.name}</div>
+          <div className="mt-1 text-xs text-white/60">Trip detail</div>
         </div>
 
         <Button disabled title="Account saving comes next." type="button">
@@ -52,33 +56,38 @@ export function TripDetailPage() {
         </Button>
       </div>
 
-      <div className="h-[52dvh] overflow-hidden rounded-xl border bg-surface">
-        <MapView
-          className="h-full w-full"
-          visited={visited}
-          active={empty}
-          highlightTripId={trip.id}
-        />
+      <div className="relative overflow-hidden rounded-[34px] bg-white/10 ring-1 ring-white/15 backdrop-blur">
+        <div className="relative h-[min(520px,calc(100dvh-320px))] min-h-[320px] w-full">
+          <MapView className="absolute inset-0 h-full w-full" visited={visited} active={empty} highlightTripId={trip.id} />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(11,23,38,0.20) 0%, rgba(11,23,38,0.35) 45%, rgba(11,23,38,0.55) 100%)"
+            }}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border bg-white p-4 shadow-soft">
-          <div className="text-xs text-ink/60">Distance</div>
-          <div className="mt-1 text-sm font-medium">
+        <div className="rounded-[28px] bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">Distance</div>
+          <div className="mt-2 text-sm font-semibold text-white/90">
             {formatDistanceMiles(trip.distanceMeters ?? 0)}
           </div>
         </div>
 
-        <div className="rounded-xl border bg-white p-4 shadow-soft">
-          <div className="text-xs text-ink/60">Duration</div>
-          <div className="mt-1 text-sm font-medium">
+        <div className="rounded-[28px] bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">Duration</div>
+          <div className="mt-2 text-sm font-semibold text-white/90">
             {formatDurationSeconds(trip.durationSeconds ?? 0)}
           </div>
         </div>
 
-        <div className="rounded-xl border bg-white p-4 shadow-soft">
-          <div className="text-xs text-ink/60">Avg speed</div>
-          <div className="mt-1 text-sm font-medium">{formatSpeedMph(avg)}</div>
+        <div className="rounded-[28px] bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">Avg speed</div>
+          <div className="mt-2 text-sm font-semibold text-white/90">{formatSpeedMph(avg)}</div>
         </div>
       </div>
     </div>

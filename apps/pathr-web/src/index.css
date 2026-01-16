@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   html,
@@ -14,10 +14,17 @@
 
   body {
     @apply bg-paper text-ink font-sans antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  a,
+  button {
+    touch-action: manipulation;
   }
 
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

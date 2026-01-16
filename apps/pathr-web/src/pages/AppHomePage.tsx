@@ -28,20 +28,39 @@ export function AppHomePage() {
   }, [state.points]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-4">
-      <div className="relative h-[calc(100dvh-56px-24px)] overflow-hidden rounded-xl border bg-surface">
-        <MapView
-          className="h-full w-full"
-          visited={visited}
-          active={active}
-          onMapClick={addPoint}
-        />
+    <div className="space-y-4">
+      {/* Mini “stats” row */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 rounded-3xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">This device</div>
+          <div className="mt-1 text-lg font-semibold text-white/90">{visitedTrips.length} trips</div>
+        </div>
+        <div className="w-[44%] rounded-3xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">Status</div>
+          <div className="mt-1 text-sm font-semibold text-white/90">
+            {state.isRecording ? (state.isPaused ? "Paused" : "Recording") : "Ready"}
+          </div>
+        </div>
+      </div>
 
-        <div className="pointer-events-none absolute left-0 right-0 top-0">
-          <div className="p-3">
-            <div className="inline-flex items-center rounded-xl border bg-paper/90 px-3 py-2 text-xs text-ink/70">
-              Tap <span className="mx-1 font-medium text-ink">Start Trip</span> then click the map to add points.
-            </div>
+      {/* Map “card” */}
+      <div className="relative overflow-hidden rounded-[34px] bg-white/10 ring-1 ring-white/15 backdrop-blur">
+        <div className="relative h-[min(520px,calc(100dvh-320px))] min-h-[340px] w-full">
+          <MapView className="absolute inset-0 h-full w-full" visited={visited} active={active} onMapClick={addPoint} />
+          {/* Tint so it feels like part of the dark sports UI */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(11,23,38,0.25) 0%, rgba(11,23,38,0.35) 40%, rgba(11,23,38,0.55) 100%)"
+            }}
+          />
+        </div>
+
+        <div className="pointer-events-none absolute left-0 right-0 top-0 p-4">
+          <div className="inline-flex items-center rounded-2xl bg-black/30 px-3 py-2 text-xs text-white/85 ring-1 ring-white/10 backdrop-blur">
+            Tap <span className="mx-1 font-semibold text-white">Start</span> then click the map to add points.
           </div>
         </div>
       </div>

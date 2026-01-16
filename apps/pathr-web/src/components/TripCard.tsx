@@ -13,19 +13,19 @@ export function TripCard({ trip }: Props) {
     <Link
       to={`/app/trips/${trip.id}`}
       className={[
-        "block rounded-xl border bg-white p-4 shadow-soft",
-        "hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+        "block rounded-[28px] bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur",
+        "hover:bg-white/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0"
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="truncate text-sm font-medium text-ink">{trip.name}</div>
-          <div className="mt-1 text-xs text-ink/60">{formatShortDate(trip.startedAt)}</div>
+          <div className="truncate text-sm font-semibold text-white/90">{trip.name}</div>
+          <div className="mt-1 text-xs text-white/60">{formatShortDate(trip.startedAt)}</div>
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="text-xs font-medium text-ink">{formatDistanceMiles(distanceMeters)}</div>
-          <div className="mt-1 text-xs text-ink/60">{formatDurationSeconds(durationSeconds)}</div>
+          <div className="text-xs font-semibold text-white/90">{formatDistanceMiles(distanceMeters)}</div>
+          <div className="mt-1 text-xs text-white/60">{formatDurationSeconds(durationSeconds)}</div>
         </div>
       </div>
     </Link>

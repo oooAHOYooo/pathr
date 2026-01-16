@@ -13,6 +13,8 @@ type RecordingState = {
 type RecordingContextValue = {
   state: RecordingState;
   visitedTrips: StoredTrip[];
+  lastFinishedTripId: string | null;
+  clearLastFinishedTrip: () => void;
   start: () => void;
   pause: () => void;
   resume: () => void;
@@ -39,6 +41,7 @@ function makeTripId() {
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const [visitedTrips, setVisitedTrips] = useState<StoredTrip[]>(() => loadStoredTrips());
+  const [lastFinishedTripId, setLastFinishedTripId] = useState<string | null>(null);
   const [state, setState] = useState<RecordingState>({
     isRecording: false,
     isPaused: false,
@@ -117,6 +120,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       const stored: StoredTrip = { trip, points: s.points };
       appendStoredTrip(stored);
       setVisitedTrips(loadStoredTrips());
+      setLastFinishedTripId(trip.id);
 
       return { isRecording: false, isPaused: false, startedAtMs: null, points: [], distanceMeters: 0 };
     });
@@ -134,6 +138,8 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     () => ({
       state,
       visitedTrips,
+      lastFinishedTripId,
+      clearLastFinishedTrip: () => setLastFinishedTripId(null),
       start,
       pause,
       resume,
@@ -141,7 +147,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       addPoint,
       statusText
     }),
-    [state, visitedTrips, statusText]
+    [state, visitedTrips, statusText, lastFinishedTripId]
   );
 
   return <RecordingContext.Provider value={value}>{children}</RecordingContext.Provider>;

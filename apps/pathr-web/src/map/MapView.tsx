@@ -13,6 +13,11 @@ type Props = {
 const OSM_TILE_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
+// Product choice: default the map to New Haven, CT so the app has a consistent starting point
+// (and doesn't immediately prompt for geolocation before the user has created value).
+const DEFAULT_CENTER_NH_CT: L.LatLngExpression = [41.3083, -72.9279];
+const DEFAULT_ZOOM = 13;
+
 function toLatLngs(line: LineString): L.LatLngExpression[] {
   return line.coordinates.map(([lng, lat]) => [lat, lng]);
 }
@@ -45,7 +50,7 @@ export function MapView({
     const map = L.map(containerRef.current, {
       zoomControl: false,
       attributionControl: true
-    }).setView([37.7749, -122.4194], 11);
+    }).setView(DEFAULT_CENTER_NH_CT, DEFAULT_ZOOM);
 
     mapRef.current = map;
 
@@ -56,6 +61,44 @@ export function MapView({
 
     visitedLayerRef.current = L.layerGroup().addTo(map);
     activeLayerRef.current = L.layerGroup().addTo(map);
+
+    // Default to New Haven, CT unless we can determine the user's location.
+    // If location services are available and the user allows it, recenter to the user's location.
+    try {
+      const perms = (navigator as any)?.permissions;
+      const geo = navigator.geolocation;
+      if (geo?.getCurrentPosition) {
+        const recenter = () =>
+          geo.getCurrentPosition(
+            (pos) => {
+              map.setView([pos.coords.latitude, pos.coords.longitude], map.getZoom(), { animate: false });
+            },
+            () => {
+              // Intentionally ignore errors and keep the default view.
+            },
+            { enableHighAccuracy: true, timeout: 6000, maximumAge: 30_000 }
+          );
+
+        if (perms?.query) {
+          void perms
+            .query({ name: "geolocation" })
+            .then((res: any) => {
+              // "granted" -> recenter immediately
+              // "prompt"  -> ask once (browser prompt); if user denies, we keep New Haven
+              if (res?.state === "granted" || res?.state === "prompt") recenter();
+            })
+            .catch(() => {
+              // Permissions API not available or failed; attempt once (may prompt).
+              recenter();
+            });
+        } else {
+          // Permissions API not supported; attempt once (may prompt).
+          recenter();
+        }
+      }
+    } catch {
+      // Keep default view.
+    }
 
     if (onMapClick) {
       map.on("click", (e: L.LeafletMouseEvent) =>

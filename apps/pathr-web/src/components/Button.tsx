@@ -15,8 +15,8 @@ export function Button({ className, variant = "secondary", ...props }: Props) {
 
   const styles =
     variant === "primary"
-      ? "bg-accent text-white border-accent hover:bg-[#1F56D8]"
-      : "bg-white text-ink border-border hover:bg-surface";
+      ? "bg-accent text-paper border-accent hover:bg-[#E6B800]"
+      : "bg-surface text-ink border-border hover:bg-[#343841]";
 
   return <button className={[base, styles, className].filter(Boolean).join(" ")} {...props} />;
 }

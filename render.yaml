@@ -4,4 +4,29 @@ services:
     env: static
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @pathr/pathr-web build
     staticPublishPath: apps/pathr-web/dist
+    envVars:
+      # Used at build time by Vite. Wire this to your API service URL.
+      - key: VITE_API_URL
+        value: https://pathr-api.onrender.com
+
+  - type: web
+    name: pathr-api
+    env: node
+    plan: starter
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @pathr/api build
+    startCommand: pnpm --filter @pathr/api start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pathr-db
+          property: connectionString
+      # Comma-separated list, or "*" for MVP.
+      - key: CORS_ORIGIN
+        value: "*"
+
+databases:
+  - name: pathr-db
+    plan: starter
 

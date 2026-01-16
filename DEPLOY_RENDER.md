@@ -1,99 +1,32 @@
-# 🚀 Deploying Pathr to Render
+# 🚀 Deploying Pathr to Render (Vite Web + Render Postgres + Tiny API)
 
-## Quick Deploy
+This repo supports a **Render-native** persistence setup:
+- **Frontend**: `apps/pathr-web` (Vite static site)
+- **Backend**: `apps/api` (Node web service)
+- **Database**: Render Postgres
 
-Pathr is now ready to deploy to Render! The MVP uses:
-- ✅ **localStorage** for trip storage (no database needed)
-- ✅ **Leaflet/OpenStreetMap** (free, no API keys needed)
-- ✅ **Browser geolocation** (works on HTTPS)
+## Option A (recommended): Use `render.yaml` blueprint
 
-## Render Setup
+1. In Render, click **New → Blueprint**
+2. Point it at this repo and keep `render.yaml` in the root
+3. Render will create:
+   - `pathr-web` (static)
+   - `pathr-api` (node web service)
+   - `pathr-db` (postgres)
 
-### 1. Connect Your Repository
+## What gets stored
+- **Users**: `username` + generated `userId` (UUID)
+- **Trips**: per-user trip rows including path points (stored as JSON for MVP)
 
-1. Go to [Render Dashboard](https://dashboard.render.com)
-2. Click "New" → "Web Service"
-3. Connect your GitHub/GitLab repository
-4. Select the `pathr` repository
+## Environment variables
 
-### 2. Configure Build Settings
+### `pathr-api`
+- `DATABASE_URL` (wired automatically from `pathr-db`)
+- `CORS_ORIGIN` (defaults to `*` for MVP; tighten later)
 
-**Build Command:**
-```bash
-cd apps/web && pnpm install && pnpm build
-```
+### `pathr-web`
+- `VITE_API_URL` (points to the API base URL)
 
-**Start Command:**
-```bash
-cd apps/web && pnpm start
-```
-
-**Root Directory:** (leave empty, or set to `apps/web` if Render supports it)
-
-### 3. Environment Variables
-
-**None needed!** The MVP works without any environment variables.
-
-(Optional: If you want to add Supabase later, you can add:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
-
-### 4. Deploy
-
-Click "Create Web Service" and Render will:
-- Install dependencies
-- Build the Next.js app
-- Deploy it
-
-## Important Notes
-
-### HTTPS Required for Geolocation
-
-- ✅ Render provides HTTPS by default
-- ✅ Browser geolocation API requires HTTPS (or localhost)
-- ✅ Your app will work perfectly on Render!
-
-### localStorage Limitations
-
-- ⚠️ Data is stored in browser (not synced across devices)
-- ⚠️ Data is lost if user clears browser data
-- ✅ Perfect for MVP testing
-- ✅ Can add Supabase later for sync
-
-### Next Steps After Deploy
-
-1. Test trip recording on your phone (HTTPS required)
-2. Drive home and record a trip
-3. View trips on the `/trips` page
-4. Share feedback!
-
-## Troubleshooting
-
-### Build Fails
-
-Check that:
-- Node.js version is 20+ (Render auto-detects)
-- `pnpm` is available (add to build command if needed)
-
-### Geolocation Not Working
-
-- Must be on HTTPS (Render provides this)
-- User must grant location permission
-- Works best on mobile devices
-
-### Map Not Loading
-
-- Check browser console for errors
-- OpenStreetMap tiles are free but rate-limited
-- Consider Mapbox if you need higher limits
-
-## Cost
-
-**Free tier on Render:**
-- ✅ 750 hours/month free
-- ✅ Automatic SSL/HTTPS
-- ✅ Perfect for MVP!
-
----
-
-**Ready to deploy?** Just connect your repo and click deploy! 🚀
+## Notes
+- The API will bootstrap its schema on boot (and `apps/api/sql/001_init.sql` exists if you prefer manual migrations).
+- TODO: move to real migrations + add auth sessions later.
