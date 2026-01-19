@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { formatDistanceMiles, lineDistanceMeters, type StoredTrip, type Trip, type TripPoint } from "@pathr/shared";
 import { appendStoredTrip, loadStoredTrips } from "../storage/trips";
+import { useAuth } from "../auth/AuthProvider";
+import { apiCreateTrip } from "../api/client";
+import { getTripDetails } from "../storage/tripDetails";
 
 const RECORDING_SESSION_KEY = "pathr.recordingSession.v1";
 
@@ -86,6 +89,7 @@ function clearRecordingSession() {
 }
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
+  const { auth } = useAuth();
   const [visitedTrips, setVisitedTrips] = useState<StoredTrip[]>(() => loadStoredTrips());
   const [lastFinishedTripId, setLastFinishedTripId] = useState<string | null>(null);
   const session = useMemo(() => loadRecordingSession(), []);
@@ -278,6 +282,39 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       return { isRecording: false, isPaused: false, startedAtMs: null, points: [], distanceMeters: 0 };
     });
   };
+
+  // Best-effort sync to Render Postgres when logged in.
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!auth?.token || !lastFinishedTripId) return;
+      const stored = loadStoredTrips().find((t) => t.trip.id === lastFinishedTripId);
+      if (!stored) return;
+      const miles = (stored.trip.distanceMeters ?? 0) / 1609.344;
+      const durationMs = (stored.trip.durationSeconds ?? 0) * 1000;
+      const path = (stored.points ?? []).map((p) => [p.latitude, p.longitude] as [number, number]);
+      const details = getTripDetails(lastFinishedTripId);
+      try {
+        await apiCreateTrip(auth.token, {
+          startedAt: stored.trip.startedAt,
+          endedAt: stored.trip.endedAt,
+          durationMs,
+          distanceMiles: miles,
+          startLabel: "",
+          endLabel: "",
+          path,
+          details: details ?? undefined
+        });
+      } catch {
+        // Ignore sync errors for MVP; trip remains local.
+      }
+      if (cancelled) return;
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [auth?.token, lastFinishedTripId]);
 
   const statusText = useMemo(() => {
     if (!state.isRecording || !state.startedAtMs) return null;

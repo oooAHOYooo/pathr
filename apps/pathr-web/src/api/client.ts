@@ -43,3 +43,47 @@ export async function apiMe(token: string): Promise<{ userId: string; username: 
   });
 }
 
+export type ApiTrip = {
+  id: string;
+  userId: string;
+  startedAt: string;
+  endedAt: string;
+  durationMs: number;
+  distanceMiles: number;
+  startLabel: string;
+  endLabel: string;
+  path: Array<[number, number]>;
+  details?: Record<string, any> | null;
+};
+
+export async function apiListTrips(token: string): Promise<ApiTrip[]> {
+  const data = await jsonFetch<{ trips: ApiTrip[] }>("/v1/trips", {
+    headers: { authorization: `Bearer ${token}` }
+  });
+  return data.trips ?? [];
+}
+
+export async function apiCreateTrip(
+  token: string,
+  trip: Omit<ApiTrip, "id" | "userId">
+): Promise<{ ok: true; tripId?: string }> {
+  return await jsonFetch("/v1/trips", {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}` },
+    body: JSON.stringify({ trip })
+  });
+}
+
+export async function apiStats(token: string): Promise<{
+  totalTrips: number;
+  totalMiles: number;
+  totalDurationMs: number;
+  last7dTrips: number;
+  last7dMiles: number;
+  last7dDurationMs: number;
+}> {
+  return await jsonFetch("/v1/stats", {
+    headers: { authorization: `Bearer ${token}` }
+  });
+}
+

@@ -1,11 +1,42 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FeatureCollection, LineString } from "geojson";
 import { useRecording } from "../recording/RecordingProvider";
 import { tripsToFeatureCollection } from "../map/geojson";
 import { MapView } from "../map/MapView";
+import { useAuth } from "../auth/AuthProvider";
+import { apiStats } from "../api/client";
 
 export function AppHomePage() {
   const { state, visitedTrips, addPoint, carPosition } = useRecording();
+  const { auth } = useAuth();
+  const [stats, setStats] = useState<null | {
+    totalTrips: number;
+    totalMiles: number;
+    totalDurationMs: number;
+    last7dTrips: number;
+    last7dMiles: number;
+    last7dDurationMs: number;
+  }>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!auth?.token) {
+        setStats(null);
+        return;
+      }
+      try {
+        const s = await apiStats(auth.token);
+        if (!cancelled) setStats(s);
+      } catch {
+        if (!cancelled) setStats(null);
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [auth?.token]);
 
   const visited = useMemo(() => tripsToFeatureCollection(visitedTrips), [visitedTrips]);
   const active = useMemo((): FeatureCollection<LineString> => {
@@ -32,8 +63,17 @@ export function AppHomePage() {
       {/* Mini “stats” row */}
       <div className="flex items-center gap-3">
         <div className="flex-1 rounded-3xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">This device</div>
-          <div className="mt-1 text-lg font-semibold text-white/90">{visitedTrips.length} trips</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">
+            {auth ? "Your account" : "This device"}
+          </div>
+          <div className="mt-1 text-lg font-semibold text-white/90">
+            {auth ? `${stats?.totalTrips ?? 0} trips` : `${visitedTrips.length} trips`}
+          </div>
+          {auth ? (
+            <div className="mt-1 text-xs text-white/60">
+              {Math.round(stats?.last7dMiles ?? 0)} mi in the last 7 days
+            </div>
+          ) : null}
         </div>
         <div className="w-[44%] rounded-3xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur">
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">Status</div>

@@ -229,6 +229,44 @@ app.post("/v1/trips", requireUser, async (req, res) => {
   }
 });
 
+app.get("/v1/stats", requireUser, async (req, res) => {
+  try {
+    const user = (req as any).user as { userId: string };
+    const rows = await query<{
+      total_trips: string;
+      total_miles: string | null;
+      total_duration_ms: string | null;
+      last7_trips: string;
+      last7_miles: string | null;
+      last7_duration_ms: string | null;
+    }>(
+      `
+        SELECT
+          COUNT(*)::text AS total_trips,
+          COALESCE(SUM(distance_miles), 0)::text AS total_miles,
+          COALESCE(SUM(duration_ms), 0)::text AS total_duration_ms,
+          COALESCE(SUM(CASE WHEN started_at >= (now() - interval '7 days') THEN 1 ELSE 0 END), 0)::text AS last7_trips,
+          COALESCE(SUM(CASE WHEN started_at >= (now() - interval '7 days') THEN distance_miles ELSE 0 END), 0)::text AS last7_miles,
+          COALESCE(SUM(CASE WHEN started_at >= (now() - interval '7 days') THEN duration_ms ELSE 0 END), 0)::text AS last7_duration_ms
+        FROM trips
+        WHERE user_id = $1;
+      `,
+      [user.userId]
+    );
+    const r = rows[0];
+    return res.json({
+      totalTrips: Number(r?.total_trips ?? 0),
+      totalMiles: Number(r?.total_miles ?? 0),
+      totalDurationMs: Number(r?.total_duration_ms ?? 0),
+      last7dTrips: Number(r?.last7_trips ?? 0),
+      last7dMiles: Number(r?.last7_miles ?? 0),
+      last7dDurationMs: Number(r?.last7_duration_ms ?? 0)
+    });
+  } catch (err: any) {
+    return res.status(400).json({ error: err?.message ?? "Stats failed" });
+  }
+});
+
 // TODO: auth sessions (email/password upgrade)
 // TODO: friends/follows + feed endpoints
 // TODO: heatmap aggregation endpoints
