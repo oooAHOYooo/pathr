@@ -8,6 +8,7 @@ type Props = {
   active: FeatureCollection<LineString>;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
   highlightTripId?: string;
+  carPosition?: { lat: number; lng: number } | null;
 };
 
 const OSM_TILE_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -33,12 +34,15 @@ export function MapView({
   visited,
   active,
   onMapClick,
-  highlightTripId
+  highlightTripId,
+  carPosition
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const visitedLayerRef = useRef<L.LayerGroup | null>(null);
   const activeLayerRef = useRef<L.LayerGroup | null>(null);
+  const carLayerRef = useRef<L.LayerGroup | null>(null);
+  const carMarkerRef = useRef<L.Marker | null>(null);
 
   const visitedData = useMemo(() => visited, [visited]);
   const activeData = useMemo(() => active, [active]);
@@ -61,6 +65,7 @@ export function MapView({
 
     visitedLayerRef.current = L.layerGroup().addTo(map);
     activeLayerRef.current = L.layerGroup().addTo(map);
+    carLayerRef.current = L.layerGroup().addTo(map);
 
     // Default to New Haven, CT unless we can determine the user's location.
     // If location services are available and the user allows it, recenter to the user's location.
@@ -110,6 +115,8 @@ export function MapView({
       mapRef.current = null;
       visitedLayerRef.current = null;
       activeLayerRef.current = null;
+      carLayerRef.current = null;
+      carMarkerRef.current = null;
       map.remove();
     };
   }, [onMapClick]);
@@ -168,6 +175,51 @@ export function MapView({
       }).addTo(group);
     }
   }, [activeData]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const group = carLayerRef.current;
+    if (!map || !group) return;
+
+    if (!carPosition) {
+      if (carMarkerRef.current) {
+        group.removeLayer(carMarkerRef.current);
+        carMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const icon = L.divIcon({
+      className: "pathr-car-icon",
+      html: `
+        <div style="
+          width: 34px; height: 34px;
+          border-radius: 16px;
+          background: rgba(0,0,0,0.35);
+          border: 1px solid rgba(255,255,255,0.18);
+          display: grid; place-items: center;
+          box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+          backdrop-filter: blur(6px);
+        ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M7.6 10.2 9 7.2c.25-.55.8-.9 1.4-.9h3.2c.6 0 1.15.35 1.4.9l1.4 3.0" stroke="#FFCD00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6.5 10.5h11c.83 0 1.5.67 1.5 1.5v4.2c0 .83-.67 1.5-1.5 1.5H6.5c-.83 0-1.5-.67-1.5-1.5V12c0-.83.67-1.5 1.5-1.5Z" stroke="#FFCD00" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 16.5h.01M16 16.5h.01" stroke="#FFCD00" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+      `,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+
+    const latlng: L.LatLngExpression = [carPosition.lat, carPosition.lng];
+    if (!carMarkerRef.current) {
+      carMarkerRef.current = L.marker(latlng, { icon, interactive: false });
+      carMarkerRef.current.addTo(group);
+    } else {
+      carMarkerRef.current.setLatLng(latlng);
+    }
+  }, [carPosition]);
 
   return <div ref={containerRef} className={["h-full w-full", className].filter(Boolean).join(" ")} />;
 }

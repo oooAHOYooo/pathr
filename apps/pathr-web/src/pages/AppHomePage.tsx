@@ -5,7 +5,7 @@ import { tripsToFeatureCollection } from "../map/geojson";
 import { MapView } from "../map/MapView";
 
 export function AppHomePage() {
-  const { state, visitedTrips, addPoint } = useRecording();
+  const { state, visitedTrips, addPoint, carPosition } = useRecording();
 
   const visited = useMemo(() => tripsToFeatureCollection(visitedTrips), [visitedTrips]);
   const active = useMemo((): FeatureCollection<LineString> => {
@@ -46,7 +46,13 @@ export function AppHomePage() {
       {/* Map “card” */}
       <div className="relative overflow-hidden rounded-[34px] bg-white/10 ring-1 ring-white/15 backdrop-blur">
         <div className="relative h-[min(520px,calc(100dvh-320px))] min-h-[340px] w-full">
-          <MapView className="absolute inset-0 h-full w-full" visited={visited} active={active} onMapClick={addPoint} />
+          <MapView
+            className="absolute inset-0 h-full w-full"
+            visited={visited}
+            active={active}
+            onMapClick={addPoint}
+            carPosition={carPosition}
+          />
           {/* Tint so it feels like part of the dark sports UI */}
           <div
             aria-hidden="true"

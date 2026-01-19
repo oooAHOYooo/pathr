@@ -32,9 +32,8 @@ const SignupBody = z.object({
 });
 
 const TripBody = z.object({
-  userId: z.string().uuid(),
   trip: z.object({
-    id: z.string().uuid().optional(),
+    // Server will generate an id. (Client ids are local-only for now.)
     startedAt: z.string(),
     endedAt: z.string(),
     durationMs: z.number().int().nonnegative(),
@@ -60,9 +59,15 @@ async function ensureSchema() {
     CREATE TABLE IF NOT EXISTS users (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       username text UNIQUE NOT NULL,
+      auth_token text UNIQUE NOT NULL,
       created_at timestamptz NOT NULL DEFAULT now()
     );
   `);
+  // If the table already existed before auth_token was added, backfill it.
+  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_token text;`);
+  await query(`UPDATE users SET auth_token = encode(gen_random_bytes(24), 'hex') WHERE auth_token IS NULL;`);
+  await query(`ALTER TABLE users ALTER COLUMN auth_token SET NOT NULL;`);
+  await query(`CREATE UNIQUE INDEX IF NOT EXISTS users_auth_token_idx ON users(auth_token);`);
   await query(`
     CREATE TABLE IF NOT EXISTS trips (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -79,6 +84,30 @@ async function ensureSchema() {
     );
   `);
   await query(`CREATE INDEX IF NOT EXISTS trips_user_started_idx ON trips(user_id, started_at DESC);`);
+}
+
+function getBearerToken(req: express.Request): string | null {
+  const h = req.header("authorization") ?? req.header("Authorization");
+  if (!h) return null;
+  const m = /^Bearer\s+(.+)$/.exec(h);
+  return m?.[1]?.trim() ?? null;
+}
+
+async function requireUser(req: express.Request, res: express.Response, next: express.NextFunction) {
+  try {
+    const token = getBearerToken(req);
+    if (!token) return res.status(401).json({ error: "Missing Authorization bearer token" });
+    const rows = await query<{ id: string; username: string }>(
+      `SELECT id::text AS id, username FROM users WHERE auth_token = $1 LIMIT 1;`,
+      [token]
+    );
+    const user = rows[0];
+    if (!user) return res.status(401).json({ error: "Invalid token" });
+    (req as any).user = { userId: user.id, username: user.username, token };
+    return next();
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message ?? "Auth failed" });
+  }
 }
 
 function parseOrigin(origin: string) {
@@ -103,27 +132,34 @@ app.post("/v1/signup", async (req, res) => {
   try {
     const body = SignupBody.parse(req.body);
     const username = body.username.toLowerCase();
-    // Username-only MVP: create or fetch existing.
-    const rows = await query<{ id: string; username: string }>(
+    // Username-only MVP:
+    // - create user if new
+    // - if username already exists, treat as "login" (returns the same token)
+    const rows = await query<{ id: string; username: string; token: string }>(
       `
-        INSERT INTO users (username)
-        VALUES ($1)
+        INSERT INTO users (username, auth_token)
+        VALUES ($1, encode(gen_random_bytes(24), 'hex'))
         ON CONFLICT (username) DO UPDATE SET username = EXCLUDED.username
-        RETURNING id::text AS id, username;
+        RETURNING id::text AS id, username, auth_token AS token;
       `,
       [username]
     );
     const user = rows[0];
-    return res.json({ userId: user.id, username: user.username });
+    return res.json({ userId: user.id, username: user.username, token: user.token });
   } catch (err: any) {
     const msg = err?.issues ? "Invalid signup payload" : err?.message ?? "Signup failed";
     return res.status(400).json({ error: msg });
   }
 });
 
-app.get("/v1/trips", async (req, res) => {
+app.get("/v1/me", requireUser, async (req, res) => {
+  const user = (req as any).user as { userId: string; username: string };
+  return res.json({ userId: user.userId, username: user.username });
+});
+
+app.get("/v1/trips", requireUser, async (req, res) => {
   try {
-    const userId = z.string().uuid().parse(req.query.userId);
+    const user = (req as any).user as { userId: string };
     const rows = await query(
       `
         SELECT
@@ -142,7 +178,7 @@ app.get("/v1/trips", async (req, res) => {
         ORDER BY started_at DESC
         LIMIT 200;
       `,
-      [userId]
+      [user.userId]
     );
     return res.json({ trips: rows });
   } catch (err: any) {
@@ -150,35 +186,31 @@ app.get("/v1/trips", async (req, res) => {
   }
 });
 
-app.post("/v1/trips", async (req, res) => {
+app.post("/v1/trips", requireUser, async (req, res) => {
   try {
-    const { userId, trip } = TripBody.parse(req.body);
-
-    // Ensure user exists (simple foreign key requirement).
-    await query(`INSERT INTO users (id, username) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING;`, [userId, `u_${userId.slice(0, 8)}`]);
+    const { trip } = TripBody.parse(req.body);
+    const user = (req as any).user as { userId: string };
 
     const rows = await query<{ id: string }>(
       `
         INSERT INTO trips (
-          id, user_id, started_at, ended_at, duration_ms, distance_miles, start_label, end_label, path, details
+          user_id, started_at, ended_at, duration_ms, distance_miles, start_label, end_label, path, details
         )
         VALUES (
-          COALESCE($1::uuid, gen_random_uuid()),
-          $2::uuid,
+          $1::uuid,
+          $2::timestamptz,
           $3::timestamptz,
-          $4::timestamptz,
-          $5::integer,
-          $6::double precision,
+          $4::integer,
+          $5::double precision,
+          $6::text,
           $7::text,
-          $8::text,
-          $9::jsonb,
-          $10::jsonb
+          $8::jsonb,
+          $9::jsonb
         )
         RETURNING id::text AS id;
       `,
       [
-        trip.id ?? null,
-        userId,
+        user.userId,
         trip.startedAt,
         trip.endedAt,
         trip.durationMs,
