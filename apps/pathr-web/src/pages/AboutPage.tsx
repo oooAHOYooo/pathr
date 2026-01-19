@@ -19,6 +19,36 @@ export function AboutPage() {
             </div>
           </div>
 
+          <div className="mt-4 rounded-3xl bg-black/25 p-4 ring-1 ring-white/10">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60">Other apps</div>
+            <div className="mt-3 space-y-2 text-sm text-white/75">
+              <a
+                href="https://app.ahoy.ooo"
+                target="_blank"
+                rel="noreferrer"
+                className="block font-semibold text-white/85 underline underline-offset-4 hover:text-white"
+              >
+                Ahoy
+              </a>
+              <a
+                href="https://newhaven-hangouts.vercel.app/"
+                target="_blank"
+                rel="noreferrer"
+                className="block font-semibold text-white/85 underline underline-offset-4 hover:text-white"
+              >
+                New Haven Hangouts
+              </a>
+              <a
+                href="https://elmcitydaily.com"
+                target="_blank"
+                rel="noreferrer"
+                className="block font-semibold text-white/85 underline underline-offset-4 hover:text-white"
+              >
+                Elm City Daily
+              </a>
+            </div>
+          </div>
+
           <div className="mt-5">
             <Link to="/app" className="text-sm font-semibold text-white/85 underline underline-offset-4 hover:text-white">
               Back to app
