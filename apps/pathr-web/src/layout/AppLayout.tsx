@@ -1,9 +1,11 @@
 import type { PropsWithChildren } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { BottomNav } from "../components/BottomNav";
 import { TopNav } from "../components/TopNav";
 import { TripFinishSheet } from "../components/TripFinishSheet";
+import { BackgroundTrackingSheet } from "../components/BackgroundTrackingSheet";
 import { useRecording } from "../recording/RecordingProvider";
 
 type Props = PropsWithChildren<{
@@ -12,7 +14,26 @@ type Props = PropsWithChildren<{
 
 export function AppLayout({ showControls = true, children }: Props) {
   const year = new Date().getFullYear();
-  const { lastFinishedTripId, clearLastFinishedTrip } = useRecording();
+  const { lastFinishedTripId, clearLastFinishedTrip, state } = useRecording();
+  const [showBgHelp, setShowBgHelp] = useState(false);
+  const wasRecording = useRef(false);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem("pathr.bgHelpDismissed.v1") === "1";
+    const nowRecording = Boolean(state.isRecording);
+    const startedNow = nowRecording && !wasRecording.current;
+    wasRecording.current = nowRecording;
+    if (!dismissed && startedNow) setShowBgHelp(true);
+  }, [state.isRecording]);
+
+  const closeBgHelp = () => {
+    try {
+      localStorage.setItem("pathr.bgHelpDismissed.v1", "1");
+    } catch {
+      // ignore
+    }
+    setShowBgHelp(false);
+  };
   return (
     <div className="relative min-h-[100dvh] overflow-x-hidden bg-[#0B1726] text-white">
       {/* Glassy blue sports background */}
@@ -45,6 +66,7 @@ export function AppLayout({ showControls = true, children }: Props) {
       </div>
 
       {lastFinishedTripId ? <TripFinishSheet tripId={lastFinishedTripId} onClose={clearLastFinishedTrip} /> : null}
+      {showBgHelp ? <BackgroundTrackingSheet onClose={closeBgHelp} /> : null}
     </div>
   );
 }

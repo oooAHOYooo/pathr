@@ -103,6 +103,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const ticker = useRef<number | null>(null);
   const [, forceTick] = useState(0);
   const geoWatchId = useRef<number | null>(null);
+  const wakeLockRef = useRef<any>(null);
 
   useEffect(() => {
     if (!state.isRecording || state.isPaused) {
@@ -123,6 +124,34 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     }
     geoWatchId.current = null;
   };
+
+  const requestWakeLock = async () => {
+    try {
+      const wl = (navigator as any)?.wakeLock;
+      if (!wl?.request) return;
+      // Release any previous lock first.
+      if (wakeLockRef.current?.release) await wakeLockRef.current.release();
+      wakeLockRef.current = await wl.request("screen");
+    } catch {
+      // Some browsers/iOS don't support wake lock; ignore.
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    try {
+      if (wakeLockRef.current?.release) await wakeLockRef.current.release();
+    } catch {
+      // ignore
+    } finally {
+      wakeLockRef.current = null;
+    }
+  };
+
+  // Keep the screen awake during an active recording when supported (helps on mobile).
+  useEffect(() => {
+    if (state.isRecording && !state.isPaused) void requestWakeLock();
+    else void releaseWakeLock();
+  }, [state.isPaused, state.isRecording]);
 
   const startGeoWatch = () => {
     if (!navigator.geolocation?.watchPosition) return;
@@ -184,11 +213,13 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
 
   const pause = () => {
     stopGeoWatch();
+    void releaseWakeLock();
     setState((s) => ({ ...s, isPaused: true }));
   };
   const resume = () => {
     setState((s) => ({ ...s, isPaused: false }));
     startGeoWatch();
+    void requestWakeLock();
   };
 
   const addPoint = (lngLat: { lng: number; lat: number }) => {
@@ -218,6 +249,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
 
   const stop = () => {
     stopGeoWatch();
+    void releaseWakeLock();
     setState((s) => {
       if (!s.startedAtMs) return { ...s, isRecording: false, isPaused: false };
 
