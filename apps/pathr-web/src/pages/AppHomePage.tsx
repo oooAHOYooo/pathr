@@ -1,42 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { FeatureCollection, LineString } from "geojson";
 import { useRecording } from "../recording/RecordingProvider";
 import { tripsToFeatureCollection } from "../map/geojson";
 import { MapView } from "../map/MapView";
 import { useAuth } from "../auth/AuthProvider";
-import { apiStats } from "../api/client";
+import { useStats } from "../api/hooks/useApi";
 
 export function AppHomePage() {
   const { state, visitedTrips, addPoint, carPosition } = useRecording();
   const { auth } = useAuth();
-  const [stats, setStats] = useState<null | {
-    totalTrips: number;
-    totalMiles: number;
-    totalDurationMs: number;
-    last7dTrips: number;
-    last7dMiles: number;
-    last7dDurationMs: number;
-  }>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function run() {
-      if (!auth?.token) {
-        setStats(null);
-        return;
-      }
-      try {
-        const s = await apiStats(auth.token);
-        if (!cancelled) setStats(s);
-      } catch {
-        if (!cancelled) setStats(null);
-      }
-    }
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [auth?.token]);
+  const { data: stats } = useStats();
 
   const visited = useMemo(() => tripsToFeatureCollection(visitedTrips), [visitedTrips]);
   const active = useMemo((): FeatureCollection<LineString> => {

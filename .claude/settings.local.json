@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(git -C /Users/agworkywork/pathr log --oneline -15)",
+      "Bash(pnpm install:*)",
+      "Bash(npx eas build:configure)",
+      "Bash(npm install:*)",
+      "Bash(eas build:configure:*)",
+      "Bash(eas whoami:*)",
+      "Bash(eas init:*)",
+      "Bash(convert:*)",
+      "Bash(npx:*)",
+      "Bash(python3:*)",
+      "Bash(node -e:*)",
+      "Bash(sips --help:*)",
+      "Bash(xcrun simctl list:*)",
+      "Bash($ANDROID_HOME/emulator/emulator -list-avds)",
+      "Bash(~/Library/Android/sdk/emulator/emulator:*)",
+      "Bash(xcode-select:*)"
+    ]
+  }
+}

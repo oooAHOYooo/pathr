@@ -2,18 +2,15 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { formatDistanceMiles, lineDistanceMeters, type StoredTrip, type Trip, type TripPoint } from "@pathr/shared";
 import { appendStoredTrip, loadStoredTrips } from "../storage/trips";
 import { useAuth } from "../auth/AuthProvider";
-import { apiCreateTrip } from "../api/client";
-import { getTripDetails } from "../storage/tripDetails";
-
-const RECORDING_SESSION_KEY = "pathr.recordingSession.v1";
-
-type RecordingState = {
-  isRecording: boolean;
-  isPaused: boolean;
-  startedAtMs: number | null;
-  points: TripPoint[];
-  distanceMeters: number;
-};
+import { useWakeLock } from "./hooks/useWakeLock";
+import { useGeolocation } from "./hooks/useGeolocation";
+import {
+  loadRecordingSession,
+  clearRecordingSession,
+  useSessionPersistence,
+  type RecordingState
+} from "./hooks/useSessionPersistence";
+import { useTripSync } from "./hooks/useTripSync";
 
 type RecordingContextValue = {
   state: RecordingState;
@@ -45,49 +42,6 @@ function makeTripId() {
   return `t_${Math.random().toString(16).slice(2, 10)}`;
 }
 
-function loadRecordingSession(): { state: RecordingState; carPosition: { lat: number; lng: number } | null } | null {
-  try {
-    const raw = localStorage.getItem(RECORDING_SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as any;
-    if (!parsed || typeof parsed !== "object") return null;
-    const s = parsed.state as any;
-    if (!s || typeof s !== "object") return null;
-    const startedAtMs = typeof s.startedAtMs === "number" ? s.startedAtMs : null;
-    const isRecording = Boolean(s.isRecording);
-    const isPaused = Boolean(s.isPaused);
-    const points = Array.isArray(s.points) ? (s.points as TripPoint[]) : [];
-    const distanceMeters = typeof s.distanceMeters === "number" ? s.distanceMeters : 0;
-
-    const cp = parsed.carPosition as any;
-    const carPosition =
-      cp && typeof cp.lat === "number" && typeof cp.lng === "number" ? ({ lat: cp.lat, lng: cp.lng } as const) : null;
-
-    return {
-      state: { isRecording, isPaused, startedAtMs, points, distanceMeters },
-      carPosition
-    };
-  } catch {
-    return null;
-  }
-}
-
-function saveRecordingSession(state: RecordingState, carPosition: { lat: number; lng: number } | null) {
-  try {
-    localStorage.setItem(RECORDING_SESSION_KEY, JSON.stringify({ state, carPosition, savedAt: new Date().toISOString() }));
-  } catch {
-    // ignore storage failures
-  }
-}
-
-function clearRecordingSession() {
-  try {
-    localStorage.removeItem(RECORDING_SESSION_KEY);
-  } catch {
-    // ignore
-  }
-}
-
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const { auth } = useAuth();
   const [visitedTrips, setVisitedTrips] = useState<StoredTrip[]>(() => loadStoredTrips());
@@ -106,9 +60,26 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
 
   const ticker = useRef<number | null>(null);
   const [, forceTick] = useState(0);
-  const geoWatchId = useRef<number | null>(null);
-  const wakeLockRef = useRef<any>(null);
 
+  // 1. Wake Lock management
+  const { requestWakeLock, releaseWakeLock } = useWakeLock(state.isRecording && !state.isPaused);
+
+  // 2. Geolocation management
+  const { startGeoWatch, stopGeoWatch } = useGeolocation(
+    state.isRecording && !state.isPaused,
+    (point) => {
+      setCarPosition(point);
+      addPoint(point);
+    }
+  );
+
+  // 3. Persistence management
+  useSessionPersistence(state, carPosition);
+
+  // 4. API Sync management
+  useTripSync(auth?.token, lastFinishedTripId);
+
+  // Ticker for elapsed time UI
   useEffect(() => {
     if (!state.isRecording || state.isPaused) {
       if (ticker.current) window.clearInterval(ticker.current);
@@ -121,88 +92,6 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       ticker.current = null;
     };
   }, [state.isPaused, state.isRecording]);
-
-  const stopGeoWatch = () => {
-    if (geoWatchId.current != null && navigator.geolocation?.clearWatch) {
-      navigator.geolocation.clearWatch(geoWatchId.current);
-    }
-    geoWatchId.current = null;
-  };
-
-  const requestWakeLock = async () => {
-    try {
-      const wl = (navigator as any)?.wakeLock;
-      if (!wl?.request) return;
-      // Release any previous lock first.
-      if (wakeLockRef.current?.release) await wakeLockRef.current.release();
-      wakeLockRef.current = await wl.request("screen");
-    } catch {
-      // Some browsers/iOS don't support wake lock; ignore.
-    }
-  };
-
-  const releaseWakeLock = async () => {
-    try {
-      if (wakeLockRef.current?.release) await wakeLockRef.current.release();
-    } catch {
-      // ignore
-    } finally {
-      wakeLockRef.current = null;
-    }
-  };
-
-  // Keep the screen awake during an active recording when supported (helps on mobile).
-  useEffect(() => {
-    if (state.isRecording && !state.isPaused) void requestWakeLock();
-    else void releaseWakeLock();
-  }, [state.isPaused, state.isRecording]);
-
-  const startGeoWatch = () => {
-    if (!navigator.geolocation?.watchPosition) return;
-    stopGeoWatch();
-    geoWatchId.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        setCarPosition({ lat, lng });
-        addPoint({ lat, lng });
-      },
-      () => {
-        // If the user denies or the device can't provide location, we keep recording locally and
-        // fall back to manual map taps.
-      },
-      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 12_000 }
-    );
-  };
-
-  // Persist in-progress recording so it can resume after iOS Safari/app restarts.
-  useEffect(() => {
-    if (state.isRecording && state.startedAtMs) {
-      saveRecordingSession(state, carPosition);
-    } else {
-      clearRecordingSession();
-    }
-  }, [state, carPosition]);
-
-  // iOS: stop GPS watch when the page is backgrounded; resume when visible again.
-  useEffect(() => {
-    const onVis = () => {
-      if (!state.isRecording || state.isPaused) return;
-      if (document.hidden) stopGeoWatch();
-      else startGeoWatch();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [state.isPaused, state.isRecording]);
-
-  // Ensure we flush session to storage on pagehide (mobile Safari).
-  useEffect(() => {
-    const onHide = () => {
-      if (state.isRecording && state.startedAtMs) saveRecordingSession(state, carPosition);
-    };
-    window.addEventListener("pagehide", onHide);
-    return () => window.removeEventListener("pagehide", onHide);
-  }, [state, carPosition]);
 
   const start = () => {
     setState({
@@ -220,6 +109,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     void releaseWakeLock();
     setState((s) => ({ ...s, isPaused: true }));
   };
+
   const resume = () => {
     setState((s) => ({ ...s, isPaused: false }));
     startGeoWatch();
@@ -238,7 +128,6 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
 
       const last = s.points[s.points.length - 1];
       if (last) {
-        // Light de-dupe for GPS jitter / rapid callbacks.
         if (Math.abs(last.latitude - p.latitude) < 1e-7 && Math.abs(last.longitude - p.longitude) < 1e-7) return s;
         if (p.timestamp - last.timestamp < 750) return s;
       }
@@ -283,39 +172,6 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Best-effort sync to Render Postgres when logged in.
-  useEffect(() => {
-    let cancelled = false;
-    async function run() {
-      if (!auth?.token || !lastFinishedTripId) return;
-      const stored = loadStoredTrips().find((t) => t.trip.id === lastFinishedTripId);
-      if (!stored) return;
-      const miles = (stored.trip.distanceMeters ?? 0) / 1609.344;
-      const durationMs = (stored.trip.durationSeconds ?? 0) * 1000;
-      const path = (stored.points ?? []).map((p) => [p.latitude, p.longitude] as [number, number]);
-      const details = getTripDetails(lastFinishedTripId);
-      try {
-        await apiCreateTrip(auth.token, {
-          startedAt: stored.trip.startedAt,
-          endedAt: stored.trip.endedAt || new Date().toISOString(),
-          durationMs,
-          distanceMiles: miles,
-          startLabel: "",
-          endLabel: "",
-          path,
-          details: details ?? undefined
-        });
-      } catch {
-        // Ignore sync errors for MVP; trip remains local.
-      }
-      if (cancelled) return;
-    }
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [auth?.token, lastFinishedTripId]);
-
   const statusText = useMemo(() => {
     if (!state.isRecording || !state.startedAtMs) return null;
     const elapsedSeconds = Math.max(0, Math.round((nowMs() - state.startedAtMs) / 1000));
@@ -349,4 +205,3 @@ export function useRecording() {
   if (!ctx) throw new Error("useRecording must be used within RecordingProvider");
   return ctx;
 }
-

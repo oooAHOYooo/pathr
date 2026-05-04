@@ -1,35 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { TripCard } from "../components/TripCard";
 import { useAuth } from "../auth/AuthProvider";
-import { apiListTrips, type ApiTrip } from "../api/client";
+import { type ApiTrip } from "../api/client";
 import { loadStoredTrips } from "../storage/trips";
+import { useTrips } from "../api/hooks/useApi";
 
 export function TripsPage() {
   const { auth } = useAuth();
   const local = useMemo(() => loadStoredTrips(), []);
-  const [remoteTrips, setRemoteTrips] = useState<ApiTrip[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function run() {
-      if (!auth?.token) {
-        setRemoteTrips(null);
-        return;
-      }
-      try {
-        const trips = await apiListTrips(auth.token);
-        if (!cancelled) setRemoteTrips(trips);
-      } catch {
-        if (!cancelled) setRemoteTrips([]);
-      }
-    }
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [auth?.token]);
+  const { data: remoteTrips, isLoading } = useTrips();
 
   const trips = auth ? remoteTrips ?? [] : local;
+
+  if (auth && isLoading) {
+    return (
+      <div className="rounded-[34px] bg-white/10 p-10 text-center ring-1 ring-white/15 backdrop-blur">
+        <div className="text-sm text-white/70">Loading your journal...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="overflow-hidden rounded-[34px] bg-white/10 ring-1 ring-white/15 backdrop-blur">
