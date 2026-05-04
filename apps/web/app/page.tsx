@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center p-8 overflow-hidden">
@@ -23,18 +25,18 @@ export default function HomePage() {
           
           {/* Action buttons with glass effect */}
           <div className="flex gap-4 justify-center mt-8">
-            <a
-              href="/record"
+            <Link
+              href="/app"
               className="px-8 py-4 rounded-glass-md glass-medium shadow-glass hover:shadow-glass-medium transition-all duration-300 hover:scale-105 border border-white/20 font-medium inline-block text-center"
             >
               Get Started
-            </a>
-            <a
-              href="/trips"
+            </Link>
+            <Link
+              href="/app/trips"
               className="px-8 py-4 rounded-glass-md gradient-accent text-white shadow-glow-accent hover:shadow-glow-primary transition-all duration-300 hover:scale-105 font-medium inline-block text-center"
             >
               My Trips
-            </a>
+            </Link>
           </div>
         </div>
       </div>

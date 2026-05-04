@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import L from "leaflet";
 import type { FeatureCollection, LineString } from "geojson";
 
@@ -44,7 +44,7 @@ export function MapView({
   const activeLayerRef = useRef<L.LayerGroup | null>(null);
   const carLayerRef = useRef<L.LayerGroup | null>(null);
   const carMarkerRef = useRef<L.Marker | null>(null);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const visitedData = useMemo(() => visited, [visited]);
   const activeData = useMemo(() => active, [active]);
@@ -148,7 +148,7 @@ export function MapView({
       if (tripId) {
         poly.on("click", (e: L.LeafletMouseEvent) => {
           L.DomEvent.stopPropagation(e);
-          navigate(`/app/trips/${tripId}`);
+          router.push(`/app/trips/${tripId}`);
         });
       }
 
@@ -161,7 +161,7 @@ export function MapView({
       const bounds = L.latLngBounds(all as any);
       map.fitBounds(bounds.pad(0.12), { animate: false });
     }
-  }, [visitedData, highlightTripId, navigate]);
+  }, [visitedData, highlightTripId, router]);
 
   useEffect(() => {
     const group = activeLayerRef.current;

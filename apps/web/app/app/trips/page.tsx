@@ -1,11 +1,13 @@
-import { useMemo } from "react";
-import { TripCard } from "../components/TripCard";
-import { useAuth } from "../auth/AuthProvider";
-import { type ApiTrip } from "../api/client";
-import { loadStoredTrips } from "../storage/trips";
-import { useTrips } from "../api/hooks/useApi";
+"use client";
 
-export function TripsPage() {
+import { useMemo } from "react";
+import { TripCard } from "@/components/TripCard";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { type ApiTrip } from "@/lib/api/client";
+import { loadStoredTrips } from "@/lib/storage/trips";
+import { useTrips } from "@/lib/api/hooks/useApi";
+
+export default function TripsPage() {
   const { auth } = useAuth();
   const local = useMemo(() => loadStoredTrips(), []);
   const { data: remoteTrips, isLoading } = useTrips();
@@ -70,4 +72,3 @@ export function TripsPage() {
     </div>
   );
 }
-

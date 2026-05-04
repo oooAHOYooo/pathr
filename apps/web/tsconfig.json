@@ -19,6 +19,7 @@
       }
     ],
     "paths": {
+      "@/*": ["./*"],
       "@pathr/ui": ["../../packages/ui/src"],
       "@pathr/shared": ["../../packages/shared/src"]
     }

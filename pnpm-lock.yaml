@@ -182,6 +182,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.39.0
         version: 2.90.1
+      '@tanstack/react-query':
+        specifier: ^5.100.9
+        version: 5.100.9(react@18.2.0)
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -198,6 +201,9 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(leaflet@1.9.4)(react-dom@18.3.1)(react@18.2.0)
     devDependencies:
+      '@types/geojson':
+        specifier: ^7946.0.14
+        version: 7946.0.16
       '@types/leaflet':
         specifier: ^1.9.21
         version: 1.9.21

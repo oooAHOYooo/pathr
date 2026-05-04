@@ -1,12 +1,24 @@
-import { useMemo } from "react";
-import type { FeatureCollection, LineString } from "geojson";
-import { useRecording } from "../recording/RecordingProvider";
-import { tripsToFeatureCollection } from "../map/geojson";
-import { MapView } from "../map/MapView";
-import { useAuth } from "../auth/AuthProvider";
-import { useStats } from "../api/hooks/useApi";
+"use client";
 
-export function AppHomePage() {
+import { useMemo } from "react";
+import dynamic from "next/dynamic";
+import type { FeatureCollection, LineString } from "geojson";
+import { useRecording } from "@/lib/recording/RecordingProvider";
+import { tripsToFeatureCollection } from "@/lib/map/geojson";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { useStats } from "@/lib/api/hooks/useApi";
+
+// Leaflet and MapView must be client-side only
+const MapView = dynamic(() => import("@/lib/map/MapView").then((mod) => mod.MapView), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-white/5 text-white/30">
+      Loading map...
+    </div>
+  )
+});
+
+export default function AppHomePage() {
   const { state, visitedTrips, addPoint, carPosition } = useRecording();
   const { auth } = useAuth();
   const { data: stats } = useStats();
@@ -105,4 +117,3 @@ export function AppHomePage() {
     </div>
   );
 }
-

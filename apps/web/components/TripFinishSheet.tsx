@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "./Button";
-import { getStoredTripById } from "../storage/trips";
-import { getTripDetails, type TripDetails, type TripRating, upsertTripDetails } from "../storage/tripDetails";
+import { getStoredTripById } from "@/lib/storage/trips";
+import { getTripDetails, type TripDetails, type TripRating, upsertTripDetails } from "@/lib/storage/tripDetails";
 import { formatDistanceMiles, formatDurationSeconds, formatShortDate } from "@pathr/shared";
 
 const TAGS = ["Commute", "Errands", "Scenic", "Work", "Family", "Roadtrip"] as const;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./Button";
-import { useRecording } from "../recording/RecordingProvider";
+import { useRecording } from "@/lib/recording/RecordingProvider";
 
 function IconTrips() {
   return (
