@@ -297,7 +297,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       try {
         await apiCreateTrip(auth.token, {
           startedAt: stored.trip.startedAt,
-          endedAt: stored.trip.endedAt,
+          endedAt: stored.trip.endedAt || new Date().toISOString(),
           durationMs,
           distanceMiles: miles,
           startLabel: "",

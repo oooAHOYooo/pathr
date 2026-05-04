@@ -18,7 +18,7 @@ export default function HomePage() {
             Like Strava for driving
           </p>
           <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark max-w-md">
-            Record your trips, discover scenic routes, and build a personal map of everywhere you've been.
+            Record your trips, discover scenic routes, and build a personal map of everywhere you&apos;ve been.
           </p>
           
           {/* Action buttons with glass effect */}

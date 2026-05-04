@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { colors, spacing, typography, radius, shadow } from '@pathr/ui';
+import { colors, spacing, typography, radius } from '@pathr/ui';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,7 +29,7 @@ export default function HomeScreen() {
           
           <Text style={styles.subtitle}>Like Strava for driving</Text>
           <Text style={styles.description}>
-            Record your trips, discover scenic routes, and build a personal map of everywhere you've been.
+            Record your trips, discover scenic routes, and build a personal map of everywhere you&apos;ve been.
           </Text>
           
           {/* Action buttons */}
