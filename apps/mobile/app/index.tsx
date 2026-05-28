@@ -1,11 +1,14 @@
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useRouter } from 'expo-router';
 import { colors, spacing, typography, radius } from '@pathr/ui';
 
 const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       {/* Animated gradient background */}
@@ -34,17 +37,31 @@ export default function HomeScreen() {
           
           {/* Action buttons */}
           <View style={styles.buttonContainer}>
-            <BlurView intensity={30} tint="light" style={styles.button}>
-              <Text style={styles.buttonText}>Get Started</Text>
-            </BlurView>
-            <LinearGradient
-              colors={[colors.light.accent.from, colors.light.accent.to]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.buttonGradient}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Get started"
+              onPress={() => router.push('/start')}
+              style={({ pressed }) => [styles.buttonPressable, pressed && styles.buttonPressed]}
             >
-              <Text style={styles.buttonTextGradient}>Learn More</Text>
-            </LinearGradient>
+              <BlurView intensity={30} tint="light" style={styles.button}>
+                <Text style={styles.buttonText}>Get Started</Text>
+              </BlurView>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Learn more about Pathr"
+              onPress={() => router.push('/start')}
+              style={({ pressed }) => [styles.buttonPressable, pressed && styles.buttonPressed]}
+            >
+              <LinearGradient
+                colors={[colors.light.accent.from, colors.light.accent.to]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonTextGradient}>Learn More</Text>
+              </LinearGradient>
+            </Pressable>
           </View>
         </View>
       </BlurView>
@@ -132,8 +149,14 @@ const styles = StyleSheet.create({
     marginTop: spacing[6],
     width: '100%',
   },
-  button: {
+  buttonPressable: {
     flex: 1,
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  button: {
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
     borderRadius: radius.medium,
@@ -149,7 +172,6 @@ const styles = StyleSheet.create({
     color: colors.light.text,
   },
   buttonGradient: {
-    flex: 1,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
     borderRadius: radius.medium,
@@ -191,4 +213,3 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
 });
-
