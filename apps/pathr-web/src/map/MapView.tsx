@@ -7,7 +7,10 @@ type Props = {
   className?: string;
   visited: FeatureCollection<LineString>;
   active: FeatureCollection<LineString>;
+  planned?: FeatureCollection<LineString>;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
+  onDrawPoint?: (lngLat: { lng: number; lat: number }) => void;
+  drawMode?: boolean;
   highlightTripId?: string;
   carPosition?: { lat: number; lng: number } | null;
 };
@@ -34,7 +37,10 @@ export function MapView({
   className,
   visited,
   active,
+  planned,
   onMapClick,
+  onDrawPoint,
+  drawMode = false,
   highlightTripId,
   carPosition
 }: Props) {
@@ -42,12 +48,17 @@ export function MapView({
   const mapRef = useRef<L.Map | null>(null);
   const visitedLayerRef = useRef<L.LayerGroup | null>(null);
   const activeLayerRef = useRef<L.LayerGroup | null>(null);
+  const plannedLayerRef = useRef<L.LayerGroup | null>(null);
   const carLayerRef = useRef<L.LayerGroup | null>(null);
   const carMarkerRef = useRef<L.Marker | null>(null);
   const navigate = useNavigate();
 
   const visitedData = useMemo(() => visited, [visited]);
   const activeData = useMemo(() => active, [active]);
+  const plannedData = useMemo(
+    () => planned ?? { type: "FeatureCollection" as const, features: [] },
+    [planned]
+  );
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -67,6 +78,7 @@ export function MapView({
 
     visitedLayerRef.current = L.layerGroup().addTo(map);
     activeLayerRef.current = L.layerGroup().addTo(map);
+    plannedLayerRef.current = L.layerGroup().addTo(map);
     carLayerRef.current = L.layerGroup().addTo(map);
 
     // Default to New Haven, CT unless we can determine the user's location.
@@ -107,7 +119,7 @@ export function MapView({
       // Keep default view.
     }
 
-    if (onMapClick) {
+    if (onMapClick && !drawMode) {
       map.on("click", (e: L.LeafletMouseEvent) =>
         onMapClick({ lng: e.latlng.lng, lat: e.latlng.lat })
       );
@@ -117,11 +129,73 @@ export function MapView({
       mapRef.current = null;
       visitedLayerRef.current = null;
       activeLayerRef.current = null;
+      plannedLayerRef.current = null;
       carLayerRef.current = null;
       carMarkerRef.current = null;
       map.remove();
     };
-  }, [onMapClick]);
+  }, [onMapClick, drawMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const container = containerRef.current;
+    if (!map || !container || !drawMode || !onDrawPoint) return;
+
+    // In drawing mode, a finger/mouse stroke creates route points instead of
+    // panning the map. Normal map controls return as soon as drawing ends.
+    map.dragging.disable();
+    map.touchZoom.disable();
+    map.doubleClickZoom.disable();
+    map.scrollWheelZoom.disable();
+    map.boxZoom.disable();
+    map.keyboard.disable();
+    container.style.touchAction = "none";
+    container.style.cursor = "crosshair";
+
+    let drawing = false;
+    let lastPoint: L.Point | null = null;
+    const addPoint = (event: PointerEvent) => {
+      const screenPoint = map.mouseEventToContainerPoint(event);
+      if (lastPoint && lastPoint.distanceTo(screenPoint) < 8) return;
+      lastPoint = screenPoint;
+      const latLng = map.containerPointToLatLng(screenPoint);
+      onDrawPoint({ lng: latLng.lng, lat: latLng.lat });
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      drawing = true;
+      lastPoint = null;
+      container.setPointerCapture?.(event.pointerId);
+      addPoint(event);
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (drawing) addPoint(event);
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      drawing = false;
+      lastPoint = null;
+      if (container.hasPointerCapture?.(event.pointerId)) container.releasePointerCapture(event.pointerId);
+    };
+
+    container.addEventListener("pointerdown", onPointerDown, true);
+    container.addEventListener("pointermove", onPointerMove, true);
+    container.addEventListener("pointerup", onPointerUp, true);
+    container.addEventListener("pointercancel", onPointerUp, true);
+
+    return () => {
+      container.removeEventListener("pointerdown", onPointerDown, true);
+      container.removeEventListener("pointermove", onPointerMove, true);
+      container.removeEventListener("pointerup", onPointerUp, true);
+      container.removeEventListener("pointercancel", onPointerUp, true);
+      container.style.touchAction = "";
+      container.style.cursor = "";
+      map.dragging.enable();
+      map.touchZoom.enable();
+      map.doubleClickZoom.enable();
+      map.scrollWheelZoom.enable();
+      map.boxZoom.enable();
+      map.keyboard.enable();
+    };
+  }, [drawMode, onDrawPoint]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -182,6 +256,43 @@ export function MapView({
 
   useEffect(() => {
     const map = mapRef.current;
+    const group = plannedLayerRef.current;
+    if (!map || !group) return;
+    group.clearLayers();
+
+    for (const feature of plannedData.features) {
+      const latlngs = toLatLngs(feature.geometry);
+      if (latlngs.length < 2) continue;
+
+      L.polyline(latlngs, {
+        color: "rgba(11, 23, 38, 0.72)",
+        weight: 10,
+        opacity: 1,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false
+      }).addTo(group);
+      L.polyline(latlngs, {
+        color: "#FFCD00",
+        weight: 5,
+        opacity: 1,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false
+      }).addTo(group);
+
+      const start = latlngs[0] as L.LatLngExpression;
+      const finish = latlngs[latlngs.length - 1] as L.LatLngExpression;
+      L.circleMarker(start, { radius: 7, color: "#FFFFFF", weight: 3, fillColor: "#0B1726", fillOpacity: 1 }).addTo(group);
+      L.circleMarker(finish, { radius: 7, color: "#0B1726", weight: 3, fillColor: "#FFCD00", fillOpacity: 1 }).addTo(group);
+    }
+
+    const all = collectAllLatLngs(plannedData);
+    if (!drawMode && all.length >= 2) map.fitBounds(L.latLngBounds(all as any).pad(0.18), { animate: false });
+  }, [drawMode, plannedData]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     const group = carLayerRef.current;
     if (!map || !group) return;
 
@@ -227,4 +338,3 @@ export function MapView({
 
   return <div ref={containerRef} className={["h-full w-full", className].filter(Boolean).join(" ")} />;
 }
-
